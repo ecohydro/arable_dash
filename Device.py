@@ -65,8 +65,8 @@ class Device(object):
             measure='L0',
             ):
         args = {}
-        # args['start'] = fmt_time(start)
-        # args['end'] = fmt_time(end)
+        args['start'] = fmt_time(start)
+        args['end'] = fmt_time(end)
         args['devices'] = [self.name]
         args['measure'] = measure
         args['order'] = order
