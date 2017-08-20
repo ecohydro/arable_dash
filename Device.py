@@ -47,6 +47,7 @@ class Device(object):
         pass
 
     def get_data(self, var_list=None):
+        # Use the query function to get a result.
         df = DataFrame([])
         # Load the df.
         # Parse the time to datetime.
@@ -59,7 +60,7 @@ class Device(object):
     def query(
             self,
             end=arrow.utcnow().datetime,
-            start=arrow.utcnow().shift(months=-1).datetime,
+            start=arrow.utcnow().shift(days=-1).datetime,
             order="time",
             measure='L0',
             ):
