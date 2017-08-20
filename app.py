@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
-from arable.client import ArableClient
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-from pandas import DataFrame
+from Organization import Organization
 
-a = ArableClient()
-a.connect('nkrell@ucsb.edu', 'map2528', 'ucsb')
-
-# Drop flag columns for now.
-devices = DataFrame(a.devices()).drop(['flags'], axis=1)
-
-# Strip location info out and make the location column format ok
-devices['location'] = [c.get('name', 'None') for c in devices.location]
+Org = Organization()
+devices_df = Org.devices_df
 
 
 def generate_table(dataframe, max_rows=60):
@@ -45,7 +38,7 @@ app.layout = html.Div(children=[
             dcc.Dropdown(
                         id='State',
                         options=[
-                            {'label': i, 'value': i} for i in devices['state'].unique()],  # NOQA
+                            {'label': i, 'value': i} for i in devices_df['state'].unique()],  # NOQA
                         value='Active'
                     )
         ], style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
@@ -66,9 +59,9 @@ app.layout = html.Div(children=[
     ]
 )
 def update_mark_search(name, state):
-    this_df = devices.loc[
-        (devices['name'].str.contains(name)) &
-        (devices['state'] == state)]
+    this_df = devices_df.loc[
+        (devices_df['name'].str.contains(name)) &
+        (devices_df['state'] == state)]
     # this_df = devices
     # return generate_table(devices)
     return generate_table(this_df.filter(
@@ -88,7 +81,7 @@ def update_mark_search(name, state):
                     'sync_interval'
                 ]
             ).sort_values(
-                ['signal_strength', 'last_seen'],
+                ['last_seen', 'signal_strength'],
                 ascending=[False, False]),
     )
 
