@@ -1,6 +1,8 @@
 from connection import conn
 import arrow
 from utilities import get_time, fmt_time
+from pandas import DataFrame
+import json
 
 time_attrs = ['last_deploy', 'last_post', 'last_seen']
 del_keys = ['flags']
@@ -39,16 +41,32 @@ class Device(object):
             else:
                 setattr(self, key, k[key])
 
+    def plot_data(self, variable, n=1000):
+        # return a dataframe that has the last N values of
+        # a variable.
+        pass
+
+    def get_data(self, var_list=None):
+        df = DataFrame([])
+        # Load the df.
+        # Parse the time to datetime.
+        # Now...
+        if var_list:
+            pass
+            # Filter by var_list
+        return df
+
     def query(
             self,
-            start=arrow.utcnow().datetime,
-            end=arrow.utcnow().shift(months=-1).datetime,
-            order='time',
+            end=arrow.utcnow().datetime,
+            start=arrow.utcnow().shift(months=-1).datetime,
+            order="time",
             measure='L0',
             ):
         args = {}
-        args['start'] = fmt_time(start)
-        args['end'] = fmt_time(end)
-        args['devices'] = [self.id]
+        # args['start'] = fmt_time(start)
+        # args['end'] = fmt_time(end)
+        args['devices'] = [self.name]
+        args['measure'] = measure
         args['order'] = order
         return conn.query(**args)
