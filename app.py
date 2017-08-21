@@ -5,11 +5,24 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from Organization import Organization
 import plotly.graph_objs as go
-import numpy as np
 from Device import VARIABLES
+from random import choice
 
 Org = Organization()
 devices_df = Org.devices_df
+
+initial_device = choice(Org.Devices)
+initial_name = initial_device.name
+initial_variable = 'Tair'
+
+df = Org.device(name=initial_name).get_data(
+    var_list=[initial_variable], limit=1000).dropna()
+
+data = [go.Scatter(
+            # Here we are initializing the data with a temporal x-axis.
+            x=df.index,
+            y=df[initial_variable],
+        )]
 
 
 def generate_table(dataframe, max_rows=60):
@@ -39,7 +52,7 @@ app.layout = html.Div(children=[
                             id='Device',
                             options=[
                                 {'label': x.name, 'value': x.name} for x in Org.Devices],  # NOQA
-                            value='A000360'
+                            value=initial_name
                         )
             ], style={'width': '48%', 'display': 'inline-block'}),  # NOQA
             html.Div([  # Dropdown selection of device state.
@@ -48,7 +61,7 @@ app.layout = html.Div(children=[
                             id='Variable',
                             options=[
                                 {'label': i, 'value': i} for i in VARIABLES['L1']],  # NOQA
-                            value='Tair'
+                            value=initial_variable
                         )
             ], style={'width': '48%', 'float': 'right', 'display': 'inline-block'})  # NOQA
         ]),
@@ -57,9 +70,7 @@ app.layout = html.Div(children=[
         dcc.Graph(
             id='mark-graph',
             figure={
-                'data': [
-                    {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'line', 'name':'Marky-Mark'},   # NOQA
-                ],
+                'data': data
             }
         )
     ]),
@@ -95,22 +106,18 @@ app.layout = html.Div(children=[
         Input(component_id='Variable', component_property='value')
     ])
 def update_mark_graph(name, variable):
-    df = Org.device(name=name).get_data(var_list=[variable])
-    data = [go.Scatter(
-                # x=df['time'],
-                x=np.arange(len(df)),
-                y=df[variable],
-                marker={'color': 'red', 'symbol': 104, 'size': "10"},
-                mode="markers+lines"
+    this_df = Org.device(name=name).get_data(
+        var_list=[variable], limit=1000).dropna()
+    this_data = [go.Scatter(
+                x=this_df.index,
+                y=this_df[variable]
             )]
     return {
-        'data': data,
+        'data': this_data,
         'layout': go.Layout(
-            xaxis={'type': 'linear', 'title': 'Time'},
-            yaxis={'title': variable},
-            # margin={'l': 40, 'b': 40, 't': 10, 'r': 1},
-            legend={'x': 0, 'y': 1},
-            hovermode='closest'
+            title='Arable Mark {id}, {var}'.format(id=name, var=variable),
+            xaxis={'title': 'Time'},
+            yaxis={'type': 'linear', 'title': variable},
         )
     }
 

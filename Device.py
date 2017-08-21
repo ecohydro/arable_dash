@@ -93,13 +93,13 @@ class Device(object):
         result = self.query(measure=measure)
         return result['results'][0]['series'][0]['columns']
 
-    def get_data(self, var_list=[], measure='L1'):
+    def get_data(self, var_list=[], measure='L1', **kwargs):
         """Returns a dataframe of Mark data.
             :param var_list: optional; list of variables to include
             :param measure: optional; "L1" (default) or "L0".
         """
         # Use the query function to get a result.
-        result = self.query(measure=measure)
+        result = self.query(measure=measure, **kwargs)
         # Prepend time to the var_list (all dataframes return "time")
         var_list.insert(0, 'time')
         try:
@@ -111,10 +111,11 @@ class Device(object):
                 df = (df.filter(items=var_list)
                         .assign(
                             time=lambda x: pd.to_datetime(x['time']))
+                        .set_index('time')
                         .dropna()
                       )
                 # Convert datetimes to Plotly timestamp format for plotting.
-                df['time'] = [x.strftime("%Y-%m-%d %H:%M:%S.%f") for x in df['time']]  # NOQA
+                # df['time'] = [x.strftime("%Y-%m-%d %H:%M:%S.%f") for x in df['time']]  # NOQA
             return df
         except KeyError:
             return DataFrame([], columns=var_list)
@@ -125,6 +126,7 @@ class Device(object):
             start=arrow.utcnow().shift(days=-1).datetime,
             order="time",
             measure='L1',
+            limit=1000
             ):
         """Query API for this device.
             :param end: optional; default is now (datetime obj in UTC)
@@ -133,6 +135,7 @@ class Device(object):
             :param order: optional; "time" (time ascending) or "-time" (time
             descending)
             :param measure: optional; "L1" (default) or "L0".
+            :param limit: optional; default is 1000
         """
         args = {}
         args['start'] = fmt_time(start)
@@ -140,4 +143,5 @@ class Device(object):
         args['devices'] = [self.name]
         args['measure'] = measure
         args['order'] = order
+        args['limit'] = limit
         return conn.query(**args)
