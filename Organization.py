@@ -27,3 +27,8 @@ class Organization(object):
             lambda x: arrow.get(x).humanize())
         self.device_dict = self.devices_df.to_dict()
         self.device_ids = [x for x in self.device_dict['id'].values()]
+
+    def device(self, name):
+        return self.Devices[
+            [i for i, x in enumerate(self.Devices) if x.name == name][0]
+        ]
