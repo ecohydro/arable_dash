@@ -7,6 +7,7 @@ from Organization import Organization
 import plotly.graph_objs as go
 from Device import VARIABLES
 from random import choice
+import os
 
 Org = Organization()
 devices_df = Org.devices_df
@@ -38,6 +39,9 @@ def generate_table(dataframe, max_rows=60):
 
 
 app = dash.Dash(__name__)
+server = app.server
+server.secret_key = os.environ.get('SECRET_KEY', None)
+
 
 app.config.supress_callback_exceptions = True
 
