@@ -13,8 +13,8 @@ Org = Organization()
 devices_df = Org.devices_df
 
 initial_device = choice(Org.Devices)
-initial_name = initial_device.name
-initial_variable = 'Tair'
+initial_name = 'A000474'
+initial_variable = 'PARdw'
 
 df = Org.device(name=initial_name).get_data(
     var_list=[initial_variable], limit=1000).dropna()
