@@ -4,3 +4,8 @@ __pycache__/
 .ipynb_checkpoints/
 *.ipynb
 example.py
+natasha.py
+query_error.py
+misc/
+.DS_Store/
+

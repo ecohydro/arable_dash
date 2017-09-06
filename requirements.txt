@@ -12,15 +12,10 @@ Flask==0.12.2
 Flask-Compress==1.4.0
 Flask-SeaSurf==0.2.2
 idna==2.6
-ipython-genutils==0.2.0
 itsdangerous==0.24
 Jinja2==2.9.6
 jsonschema==2.6.0
-jupyter-core==4.3.0
 MarkupSafe==1.0
-nbformat==4.3.0
-numpy==1.13.1
-pandas==0.20.3
 plotly==2.0.13
 python-dateutil==2.6.1
 pytz==2017.2
