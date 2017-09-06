@@ -23,4 +23,5 @@ six==1.10.0
 traitlets==4.3.2
 urllib3==1.22
 Werkzeug==0.12.2
-arable==0.2.dev3
+arable==0.2.dev4
+
