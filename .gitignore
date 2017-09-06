@@ -7,5 +7,7 @@ example.py
 natasha.py
 query_error.py
 misc/
-.DS_Store/
+.DS_Store
+.DS*
+
 
