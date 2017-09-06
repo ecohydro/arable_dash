@@ -1,7 +1,8 @@
-numpy==1.13.1
-pandas==0.20.3
-ipykernel==4.6.1
-ipython==6.1.0
-ipython-genutils==0.2.0
-jupyter-core==4.3.0
-nbformat==4.3.0
+# conda-requirements.txt
+numpy
+pandas
+ipykernel
+ipython
+ipython-genutils
+jupyter-core
+nbformat
