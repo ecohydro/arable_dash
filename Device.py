@@ -2,6 +2,7 @@ from connection import conn
 import arrow
 from utilities import get_time, fmt_time
 from pandas import DataFrame
+from pandas.compat import StringIO
 import pandas as pd
 
 time_attrs = ['last_deploy', 'last_post', 'last_seen']
@@ -93,7 +94,7 @@ class Device(object):
         result = self.query(measure=measure)
         return result['results'][0]['series'][0]['columns']
 
-    def get_data(self, var_list=[], measure='L1', **kwargs):
+    def get_data(self, var_list=[], measure='L1', output_fmt='csv', **kwargs):
         """Returns a dataframe of Mark data.
             :param var_list: optional; list of variables to include
             :param measure: optional; "L1" (default) or "L0".
@@ -102,23 +103,36 @@ class Device(object):
         result = self.query(measure=measure, **kwargs)
         # Prepend time to the var_list (all dataframes return "time")
         var_list.insert(0, 'time')
-        try:
-            data = result['results'][0]['series'][0]['values']
-            df = DataFrame(data, columns=self.variables[measure])
-            # If no list is passed, only "time" is in var_list:
-            if len(var_list) > 1:
-                # Filter to include only items in the var_list
-                df = (df.filter(items=var_list)
-                        .assign(
-                            time=lambda x: pd.to_datetime(x['time']))
-                        .set_index('time')
-                        .dropna()
-                      )
-                # Convert datetimes to Plotly timestamp format for plotting.
-                # df['time'] = [x.strftime("%Y-%m-%d %H:%M:%S.%f") for x in df['time']]  # NOQA
-            return df
-        except KeyError:
-            return DataFrame([], columns=var_list)
+        if output_fmt is 'json':
+            try:
+                data = result['results'][0]['series'][0]['values']
+                df = DataFrame(data, columns=self.variables[measure])
+                # If no list is passed, only "time" is in var_list:
+                if len(var_list) > 1:
+                    # Filter to include only items in the var_list
+                    df = (df.filter(items=var_list)
+                            .assign(
+                                time=lambda x: pd.to_datetime(x['time']))
+                            .set_index('time')
+                            .dropna()
+                          )
+                    # Convert datetimes to Plotly timestamp format for plotting
+                    # df['time'] = [x.strftime("%Y-%m-%d %H:%M:%S.%f") for x in df['time']]  # NOQA
+                return df
+            except KeyError:
+                return DataFrame([], columns=var_list)
+        elif output_fmt is 'csv':
+                try:
+                    df = pd.read_csv(StringIO(result))
+                    df = (df.filter(items=var_list)
+                            .assign(
+                                time=lambda x: pd.to_datetime(x['time']))
+                            .set_index('time')
+                            .dropna()
+                          )
+                    return df
+                except KeyError:
+                    return DataFrame([], columns=var_list)
 
     def query(
             self,
@@ -126,6 +140,7 @@ class Device(object):
             start=arrow.utcnow().shift(days=-1).datetime,
             order="time",
             measure='L1',
+            output_format='csv',   # Added to deal with error in Arable client.
             limit=1000
             ):
         """Query API for this device.
@@ -135,6 +150,7 @@ class Device(object):
             :param order: optional; "time" (time ascending) or "-time" (time
             descending)
             :param measure: optional; "L1" (default) or "L0".
+            :param output_format: optional; "csv" (default)
             :param limit: optional; default is 1000
         """
         args = {}
@@ -144,4 +160,5 @@ class Device(object):
         args['measure'] = measure
         args['order'] = order
         args['limit'] = limit
+        args['format'] = output_format
         return conn.query(**args)
