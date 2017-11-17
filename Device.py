@@ -7,6 +7,14 @@ import pandas as pd
 
 time_attrs = ['last_deploy', 'last_post', 'last_seen']
 del_keys = ['flags']
+measure = 'L1_hourly'
+
+INTERVAL = {  # How many days of data to retrieve for each measure
+    'L0': 1,
+    'L1': 1,
+    'L1_hourly': 7,
+    'L1_daily': 30
+}
 
 VARIABLES = {
     'L0': [
@@ -47,8 +55,36 @@ VARIABLES = {
         'S_dw', 'S_uw', 'SWdw', 'SWuw',
         'Tabove',
         'Tair',
-        'Tbelow']
-    }
+        'Tbelow'],
+    'L1_hourly': [
+        'time',
+        'device',
+        'location',
+        'lat', 'long',
+        'B1dw', 'B1uw', 'B2dw', 'B2uw', 'B3dw', 'B3uw', 'B4dw', 'B4uw',
+        'B5dw', 'B5uw', 'B6dw', 'B6uw', 'B7dw', 'B7uw', 'LWdw', 'LWuw',
+        'LfW', 'P',
+        'PARdw', 'PARuw',
+        'RH',
+        'SWdw', 'SWuw',
+        'Tabove', 'Tair', 'Tbelow', 'Tdew'
+    ],
+    'L1_daily': [
+        'time',
+        'device',
+        'location',
+        'lat', 'long',
+        'CGDD',
+        'Cl',
+        'ET',
+        'GDD',
+        'LfAirDelta',
+        'NDVI',
+        'SWdw',
+        'maxT', 'meanT', 'minT',
+        'prate', 'precip'
+    ]
+}
 
 
 class Device(object):
@@ -137,7 +173,7 @@ class Device(object):
     def query(
             self,
             end=arrow.utcnow().datetime,
-            start=arrow.utcnow().shift(days=-1).datetime,
+            start=None,
             order="time",
             measure='L1',
             output_format='csv',   # Added to deal with error in Arable client.
@@ -145,7 +181,7 @@ class Device(object):
             ):
         """Query API for this device.
             :param end: optional; default is now (datetime obj in UTC)
-            :param start: optional; default is 1 day before now
+            :param start: optional; default is based on measure used
             (datetime obj in UTC)
             :param order: optional; "time" (time ascending) or "-time" (time
             descending)
@@ -154,6 +190,8 @@ class Device(object):
             :param limit: optional; default is 1000
         """
         args = {}
+        if not start:
+            start = arrow.utcnow().shift(days=-1*INTERVAL[measure]).datetime
         args['start'] = fmt_time(start)
         args['end'] = fmt_time(end)
         args['devices'] = [self.name]

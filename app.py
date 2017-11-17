@@ -14,15 +14,23 @@ devices_df = Org.devices_df
 
 initial_device = choice(Org.Devices)
 initial_name = 'A000474'
-initial_variable = 'PARdw'
+initial_variable = {
+    'L0': 'PARdw',
+    'L1': 'PARdw',
+    'L1_hourly': 'PARdw',
+    'L1_daily': 'precip'
+}
+initial_measure = 'L1_daily'
 
 df = Org.device(name=initial_name).get_data(
-    var_list=[initial_variable], limit=1000).dropna()
+    var_list=[initial_variable[initial_measure]],
+    measure=initial_measure,
+    limit=1000).dropna()
 
 data = [go.Scatter(
             # Here we are initializing the data with a temporal x-axis.
             x=df.index,
-            y=df[initial_variable],
+            y=df[initial_variable[initial_measure]],
         )]
 
 
@@ -58,16 +66,20 @@ app.layout = html.Div(children=[
                                 {'label': x.name, 'value': x.name} for x in Org.Devices],  # NOQA
                             value=initial_name
                         )
-            ], style={'width': '48%', 'display': 'inline-block'}),  # NOQA
-            html.Div([  # Dropdown selection of device state.
-                html.Div(children='''Variable'''),
+            ], style={'width': '30%', 'display': 'inline-block'}),  # NOQA
+            html.Div([  # Dropdown selection of measure
+                html.Div(children="Measure"),
                 dcc.Dropdown(
-                            id='Variable',
-                            options=[
-                                {'label': i, 'value': i} for i in VARIABLES['L1']],  # NOQA
-                            value=initial_variable
-                        )
-            ], style={'width': '48%', 'float': 'right', 'display': 'inline-block'})  # NOQA
+                    id='Measure',
+                    options=[
+                        {'label': i, 'value': i} for i in VARIABLES.keys()],
+                    value=initial_measure
+                    )
+                ], style={'width': '30%', 'display': 'inline-block'}),
+            html.Div([  # Dropdown selection of device variable.
+                html.Div(children='''Variable'''),
+                dcc.Dropdown(id='Variable')
+            ], style={'width': '30%', 'float': 'right', 'display': 'inline-block'})  # NOQA
         ]),
     ]),
     html.Div([
@@ -104,14 +116,44 @@ app.layout = html.Div(children=[
 
 
 @app.callback(
+    dash.dependencies.Output(
+        component_id='Variable', component_property='options'
+    ),
+    [dash.dependencies.Input(
+        component_id='Measure', component_property='value'
+    )]
+)
+def set_variable_options(selected_measure):
+    return [{'label': i, 'value': i} for i in VARIABLES[selected_measure]]
+
+
+@app.callback(
+    dash.dependencies.Output(
+        component_id='Variable', component_property='value'),
+    [dash.dependencies.Input(
+        component_id='Measure', component_property='value'
+    )]
+)
+def set_variable_value(current_measure):
+        return initial_variable[current_measure]
+
+
+@app.callback(
     Output(component_id='mark-graph', component_property='figure'),
     [
         Input(component_id='Device', component_property='value'),
+        Input(component_id='Measure', component_property='value'),
         Input(component_id='Variable', component_property='value')
     ])
-def update_mark_graph(name, variable):
+def update_mark_graph(name, measure, variable):
+    # Catch cases where we've updated measure and no variable has been set yet.
+    # This generally only happens on initial page load.
+    if not variable:
+        variable = initial_variable[measure]
+
+    # Gather the data and update the plot.
     this_df = Org.device(name=name).get_data(
-        var_list=[variable], limit=1000).dropna()
+        var_list=[variable], measure=measure, limit=1000).dropna()
     this_data = [go.Scatter(
                 x=this_df.index,
                 y=this_df[variable]
@@ -119,7 +161,8 @@ def update_mark_graph(name, variable):
     return {
         'data': this_data,
         'layout': go.Layout(
-            title='Arable Mark {id}, {var}'.format(id=name, var=variable),
+            title='Arable Mark {id}, {measure} data, {var}'.format(
+                id=name, measure=measure, var=variable),
             xaxis={'title': 'Time'},
             yaxis={'type': 'linear', 'title': variable},
         )
