@@ -13,7 +13,7 @@ Org = Organization()
 devices_df = Org.devices_df
 
 initial_device = choice(Org.Devices)
-initial_name = 'A000474'
+initial_name = initial_device.name
 initial_variable = {
     'L0': 'PARdw',
     'L1': 'PARdw',
